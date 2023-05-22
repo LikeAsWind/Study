@@ -124,7 +124,7 @@ public class ComparePriceService {
     public PriceResult computeRealPrice(PriceResult priceResult, int disCount) {
         priceResult.setRealPrice(priceResult.getPrice() - disCount);
         priceResult.setDiscount(disCount);
-        CommonUtils.printThreadLog(priceResult.getPlatform() + "最终价格" + priceResult.getRealPrice());
+            CommonUtils.printThreadLog(priceResult.getPlatform() + "最终价格" + priceResult.getRealPrice());
         return priceResult;
     }
 
@@ -132,11 +132,10 @@ public class ComparePriceService {
     public PriceResult batchCompletePrice(List<String> products) {
 
         // 遍历，根据商品名称开启异步任务获取最终价，最终结果归集
-        List<CompletableFuture<PriceResult>> completableFutures = products.stream().map(product -> {
-            return CompletableFuture.supplyAsync(() -> HttpRequest.getTaoBaoPrice(product))
-                    .thenCombine(CompletableFuture.supplyAsync(() -> HttpRequest.getTaoBaoDiscount(product)),
-                            this::computeRealPrice);
-        }).collect(Collectors.toList());
+        List<CompletableFuture<PriceResult>> completableFutures = products.stream().map(product ->
+                CompletableFuture.supplyAsync(() -> HttpRequest.getTaoBaoPrice(product))
+                .thenCombine(CompletableFuture.supplyAsync(() -> HttpRequest.getTaoBaoDiscount(product)),
+                        this::computeRealPrice)).collect(Collectors.toList());
         // 排序
         PriceResult priceResult = completableFutures.stream().map(CompletableFuture::join)
                 .sorted(Comparator.comparing(PriceResult::getRealPrice))
